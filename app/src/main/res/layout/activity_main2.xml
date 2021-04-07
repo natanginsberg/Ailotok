@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/main_background"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/name_prompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:text="What is your name?"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/name"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/name"
+        android:layout_width="200dp"
+        android:layout_height="35dp"
+        android:layout_margin="12dp"
+        android:background="@drawable/edit_text_background"
+        android:hint="Name"
+        android:paddingHorizontal="10dp"
+        android:textColor="@android:color/black"
+        android:textColorHint="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/question"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/name_prompt" />
+
+    <TextView
+        android:id="@+id/name_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(Enter your name please)"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:visibility="invisible"
+        app:layout_constraintLeft_toLeftOf="@id/name"
+        app:layout_constraintRight_toRightOf="@id/name"
+        app:layout_constraintTop_toBottomOf="@id/name" />
+
+    <TextView
+        android:id="@+id/question"
+        style="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:text="What topic would you like to speak about?"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/name" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/question">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <GridLayout
+                android:id="@+id/topics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:columnCount="2"
+                android:useDefaultMargins="true" />
+        </LinearLayout>
+    </ScrollView>
+
+
+    <!--    <RelativeLayout-->
+    <!--        android:id="@+id/feelings_topic"-->
+    <!--        android:layout_width="85dp"-->
+    <!--        android:layout_height="85dp"-->
+    <!--        android:background="@drawable/topic_background"-->
+    <!--        app:layout_constraintBottom_toTopOf="@id/interview_topic"-->
+    <!--        app:layout_constraintLeft_toLeftOf="parent"-->
+    <!--        app:layout_constraintRight_toRightOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent">-->
+
+    <!--        <ImageView-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent"-->
+    <!--            android:layout_marginBottom="15dp"-->
+    <!--            android:background="@drawable/ic_action_name" />-->
+
+    <!--        <TextView-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_alignParentBottom="true"-->
+    <!--            android:layout_centerInParent="true"-->
+    <!--            android:text="Feelings"-->
+    <!--            android:textSize="15sp" />-->
+
+    <!--    </RelativeLayout>-->
+
+    <!--    <RelativeLayout-->
+    <!--        android:id="@+id/interview_topic"-->
+    <!--        android:layout_width="85dp"-->
+    <!--        android:layout_height="85dp"-->
+    <!--        android:background="@drawable/topic_background"-->
+    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--        app:layout_constraintLeft_toLeftOf="parent"-->
+    <!--        app:layout_constraintRight_toRightOf="parent"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/feelings_topic">-->
+
+    <!--        <ImageView-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent"-->
+    <!--            android:layout_marginBottom="15dp"-->
+    <!--            android:background="@drawable/ic_headset" />-->
+
+    <!--        <TextView-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_alignParentBottom="true"-->
+    <!--            android:layout_centerInParent="true"-->
+    <!--            android:text="Interview"-->
+    <!--            android:textSize="15sp" />-->
+
+    <!--    </RelativeLayout>-->
+
+</androidx.constraintlayout.widget.ConstraintLayout>
