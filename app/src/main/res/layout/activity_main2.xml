@@ -66,7 +66,7 @@
         android:layout_height="0dp"
         android:orientation="vertical"
         android:scrollbars="none"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHeight_percent="0.4"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/question">
@@ -88,58 +88,5 @@
                 android:useDefaultMargins="true" />
         </LinearLayout>
     </ScrollView>
-
-
-    <!--    <RelativeLayout-->
-    <!--        android:id="@+id/feelings_topic"-->
-    <!--        android:layout_width="85dp"-->
-    <!--        android:layout_height="85dp"-->
-    <!--        android:background="@drawable/topic_background"-->
-    <!--        app:layout_constraintBottom_toTopOf="@id/interview_topic"-->
-    <!--        app:layout_constraintLeft_toLeftOf="parent"-->
-    <!--        app:layout_constraintRight_toRightOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent">-->
-
-    <!--        <ImageView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="match_parent"-->
-    <!--            android:layout_marginBottom="15dp"-->
-    <!--            android:background="@drawable/ic_action_name" />-->
-
-    <!--        <TextView-->
-    <!--            android:layout_width="wrap_content"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:layout_alignParentBottom="true"-->
-    <!--            android:layout_centerInParent="true"-->
-    <!--            android:text="Feelings"-->
-    <!--            android:textSize="15sp" />-->
-
-    <!--    </RelativeLayout>-->
-
-    <!--    <RelativeLayout-->
-    <!--        android:id="@+id/interview_topic"-->
-    <!--        android:layout_width="85dp"-->
-    <!--        android:layout_height="85dp"-->
-    <!--        android:background="@drawable/topic_background"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintLeft_toLeftOf="parent"-->
-    <!--        app:layout_constraintRight_toRightOf="parent"-->
-    <!--        app:layout_constraintTop_toBottomOf="@id/feelings_topic">-->
-
-    <!--        <ImageView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="match_parent"-->
-    <!--            android:layout_marginBottom="15dp"-->
-    <!--            android:background="@drawable/ic_headset" />-->
-
-    <!--        <TextView-->
-    <!--            android:layout_width="wrap_content"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:layout_alignParentBottom="true"-->
-    <!--            android:layout_centerInParent="true"-->
-    <!--            android:text="Interview"-->
-    <!--            android:textSize="15sp" />-->
-
-    <!--    </RelativeLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

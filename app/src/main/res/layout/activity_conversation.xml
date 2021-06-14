@@ -7,6 +7,16 @@
     android:background="@drawable/main_background"
     tools:context=".ConversationActivity">
 
+<EditText
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    android:id="@+id/written_text"
+    android:hint="Text here"
+    android:textColor="@color/white"/>
+
     <TextView
         android:id="@+id/text_displayed"
         android:layout_width="match_parent"
@@ -15,13 +25,33 @@
         android:textColor="@android:color/white"
         android:textSize="15sp"
         app:layout_constraintHeight_percent="0.7"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/written_text" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toRightOf="@id/written_text"
+        android:text="Enter"
+        app:layout_constraintTop_toTopOf="@id/written_text"
+        app:layout_constraintBottom_toBottomOf="@id/written_text"
+        app:layout_constraintRight_toRightOf="parent"
+        android:onClick="getResponse"/>
 
     <ImageView
         android:id="@+id/mic"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:background="@drawable/ic_mic_gray"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_displayed" />
+
+    <ProgressBar
+        android:id="@+id/searching"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

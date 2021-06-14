@@ -2,8 +2,6 @@ package com.speech.ailotok;
 
 import android.content.Context;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
@@ -17,21 +15,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import java.util.Vector;
 
 public class AvatarSpeech {
 
     private final UtteranceProgressListener utteranceProgressListener;
-    private final Vector<FlowNode> flow;
+    //    private final Vector<FlowNode> flow;
     private final DisplaySpeechOnUIListener listener;
     private TextToSpeech mTTS;
-    private FlowNode currentNode;
-    private String QUESTION = "question";
-    private String RESPONSE = "response";
+    private EndListener endListener;
 
-    public AvatarSpeech(Context context, Vector<FlowNode> flow, UtteranceProgressListener utteranceProgressListener, DisplaySpeechOnUIListener listener) {
+    public AvatarSpeech(Context context, String conversationInit, UtteranceProgressListener utteranceProgressListener, DisplaySpeechOnUIListener listener) {
         this.utteranceProgressListener = utteranceProgressListener;
-        this.flow = flow;
+//        this.flow = flow;
         this.listener = listener;
         mTTS = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -39,13 +34,14 @@ public class AvatarSpeech {
             public void onInit(int status) {
                 if (status == TextToSpeech.SUCCESS) {
                     int result = mTTS.setLanguage(Locale.ENGLISH);
-                    if (result == TextToSpeech.LANG_MISSING_DATA
-                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "Language not supported");
-                    } else {
-                        assignCurrentNode();
-                        speak(currentNode.getQuestion(), currentNode.getQuestion());
-                    }
+//                    if (result == TextToSpeech.LANG_MISSING_DATA
+//                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+//                        Log.e("TTS", "Language not supported");
+//                    } else {
+//                        if (assignCurrentNode())
+//                            speak(currentNode.getQuestion(), QUESTION);
+//                    }
+                    speak(conversationInit);
                 } else {
                     Log.e("TTS", "Initialization failed");
                 }
@@ -53,23 +49,29 @@ public class AvatarSpeech {
         });
     }
 
-    private void assignCurrentNode() {
-        if (flow.size() == 0)
-            close();
-        else {
-            currentNode = flow.firstElement();
-            flow.removeElementAt(0);
-        }
+    public void subscribeEndListener(EndListener endListener) {
+        this.endListener = endListener;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void speak(String phrase, String id) {
+////    private boolean assignCurrentNode() {
+//        if (flow.size() == 0) {
+//            close();
+//            return false;
+//        } else {
+//            currentNode = flow.firstElement();
+//            flow.removeElementAt(0);
+//            return true;
+//        }
+//    }
+
+
+    public void speak(String phrase) {
         listener.display(phrase);
         HashMap<String, String> map = new HashMap<>();
-        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
+        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "question");
 //        String text = "what is your name";
-        float pitch = 1f;
-        float speed = 0.8f;
+        float pitch = 0.7f;
+        float speed = 0.9f;
         mTTS.setPitch(pitch);
         mTTS.setSpeechRate(speed);
         Set<String> a = new HashSet<>();
@@ -86,23 +88,33 @@ public class AvatarSpeech {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void speak(boolean longResponse) {
-        if (!currentNode.isNodeFinished()) {
-            speak(longResponse ? currentNode.getNegativeResponse() : currentNode.getPositiveResponse(), RESPONSE);
-        } else {
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    assignCurrentNode();
-                    speak(currentNode.getQuestion(), QUESTION);
-                }
-            }, 500);
-        }
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    public void speak(String response) {
+//        speak(response);
+////        if (!currentNode.isNodeFinished()) {
+////            speak(longResponse ? currentNode.getPositiveResponse() : currentNode.getNegativeResponse(), RESPONSE);
+////        } else {
+////            final Handler handler = new Handler(Looper.getMainLooper());
+////            handler.postDelayed(new Runnable() {
+////                @Override
+////                public void run() {
+////                    if (assignCurrentNode())
+////                        speak(currentNode.getQuestion(), QUESTION);
+////                    else
+////
+////
+////
+////                     endListener.end();
+////                }
+////            }, 500);
+//    }
+
 
     public interface DisplaySpeechOnUIListener {
         void display(String text);
+    }
+
+    public interface EndListener {
+        void end();
     }
 }
