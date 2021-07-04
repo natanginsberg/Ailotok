@@ -1,7 +1,9 @@
 package com.speech.ailotok;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,12 +26,17 @@ public class MainUI {
 
     private WeakReference<Activity> weakReference;
     private MainUIListener listener;
+    private View chosenTopicView;
+    private Topic chosenTopic;
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public MainUI(Activity activity, View mainView) {
         weakReference = new WeakReference<>(activity);
-        topics.add(new Topic("Interview", weakReference.get().getDrawable(R.drawable.ic_headset), "$hey * how are you doing?$ $ $I’m very happy to talk to you. I might have some mistakes in understanding you, but I’m always here for you. I’ll correct your grammar mistakes, so talk as much as you would like. The more you talk the more fluent you will get. What was the highlight of your day?$Gotcha! I hope you will enjoy the rest of your day$ Thank you * for sharing it with me, you are an amazing person and you deserve so much love!$Why are you upset?$Gotcha!$Thank you so much for sharing that with me. I am confident that you will overcome every obstacle in your way. I love you!$tWhat else would you like to tell me?$thank you so much for talking to me!$That sounds fantastic$"));
-        topics.add(new Topic("Feelings", weakReference.get().getDrawable(R.drawable.ic_action_name), "$hey * how are you doing?$ $ $I’m very happy to talk to you. I might have some mistakes in understanding you, but I’m always here for you. I’ll correct your grammar mistakes, so talk as much as you would like. The more you talk the more fluent you will get. What was the highlight of your day?$ $Gotcha! I hope you will enjoy the rest of your day$ Thank you * for sharing it with me, you are an amazing person and you deserve so much love!$Why are you upset?$Gotcha!$Thank you so much for sharing that with me. I am confident that you will overcome every obstacle in your way. I love you!$tWhat else would you like to tell me?$thank you so much for talking to me!$That sounds fantastic"));
+        topics.add(new Topic("Emotions", weakReference.get().getDrawable(R.drawable.ic_emoticons)));
+        topics.add(new Topic("General", weakReference.get().getDrawable(R.drawable.ic_chat)));
+        topics.add(new Topic("Food", weakReference.get().getDrawable(R.drawable.ic_food)));
+        topics.add(new Topic("Travel", weakReference.get().getDrawable(R.drawable.ic_traveling)));
 
         mainView.post(new Runnable() {
             @Override
@@ -57,10 +64,32 @@ public class MainUI {
                     inflatedLayout.getLayoutParams());
             gridParam.setGravity(Gravity.CENTER);
             gridParam.setMargins(75, 40, 75, 0);
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            weakReference.get().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int width = displayMetrics.widthPixels;
+            gridParam.width = width / 3;
+            gridParam.height = width / 2;
+
             inflatedLayout.setLayoutParams(gridParam);
             inflatedLayout.setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("UseCompatLoadingForDrawables")
                 @Override
                 public void onClick(View view) {
+                    if (chosenTopic != null) {
+                        chosenTopicView.setBackground(weakReference.get().getDrawable(R.drawable.unclicked_box));
+
+                        if (chosenTopic.getName().equals(topic.getName()))
+                            chosenTopic = null;
+                        else {
+                            view.setBackground(weakReference.get().getDrawable(R.drawable.clicked_topic));
+                            chosenTopicView = view;
+                            chosenTopic = topic;
+                        }
+                    } else {
+                        view.setBackground(weakReference.get().getDrawable(R.drawable.clicked_topic));
+                        chosenTopicView = view;
+                        chosenTopic = topic;
+                    }
                     listener.openConversation(topic);
                 }
             });

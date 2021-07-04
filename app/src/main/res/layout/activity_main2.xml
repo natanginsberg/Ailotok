@@ -4,72 +4,52 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/main_background"
+    android:background="@drawable/ic_background"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/name_prompt"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/page_guide"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        android:text="What is your name?"
-        android:textColor="@color/black"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@id/name"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/name"
-        android:layout_width="200dp"
-        android:layout_height="35dp"
-        android:layout_margin="12dp"
-        android:background="@drawable/edit_text_background"
-        android:hint="Name"
-        android:paddingHorizontal="10dp"
-        android:textColor="@android:color/black"
-        android:textColorHint="@color/black"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@id/question"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/name_prompt" />
-
-    <TextView
-        android:id="@+id/name_error"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="(Enter your name please)"
-        android:textColor="@color/black"
-        android:textSize="12sp"
-        android:visibility="invisible"
-        app:layout_constraintLeft_toLeftOf="@id/name"
-        app:layout_constraintRight_toRightOf="@id/name"
-        app:layout_constraintTop_toBottomOf="@id/name" />
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.17" />
 
     <TextView
         android:id="@+id/question"
-        style="bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="15dp"
-        android:text="What topic would you like to speak about?"
-        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:text="Choose a Topic for a conversation with"
+        android:textColor="#5A002C"
         android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/name" />
+        app:layout_constraintTop_toBottomOf="@id/page_guide" />
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:fontFamily="@font/permanent_marker_regular"
+        android:gravity="center"
+        android:text="Aitok"
+        android:textColor="#5A002C"
+        android:textSize="36sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/question" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
         android:scrollbars="none"
-        app:layout_constraintHeight_percent="0.4"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/question">
+        app:layout_constraintTop_toBottomOf="@id/name">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -88,5 +68,22 @@
                 android:useDefaultMargins="true" />
         </LinearLayout>
     </ScrollView>
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/ic_continue_button"
+        android:onClick="startConversation"
+        android:text="Continue"
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:letterSpacing="0.1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="4"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintWidth_percent="0.75" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

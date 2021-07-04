@@ -9,8 +9,6 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import com.speech.ailotok.model.FlowNode;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -18,6 +16,8 @@ import java.util.Set;
 
 public class AvatarSpeech {
 
+    private static final String COMPUTER_GENERATED = "computerGenerated";
+    private static final String USER_GENERATED = "user";
     private final UtteranceProgressListener utteranceProgressListener;
     //    private final Vector<FlowNode> flow;
     private final DisplaySpeechOnUIListener listener;
@@ -41,7 +41,7 @@ public class AvatarSpeech {
 //                        if (assignCurrentNode())
 //                            speak(currentNode.getQuestion(), QUESTION);
 //                    }
-                    speak(conversationInit);
+                    speak(conversationInit, false);
                 } else {
                     Log.e("TTS", "Initialization failed");
                 }
@@ -65,13 +65,16 @@ public class AvatarSpeech {
 //    }
 
 
-    public void speak(String phrase) {
+    public void speak(String phrase, boolean translation) {
         listener.display(phrase);
         HashMap<String, String> map = new HashMap<>();
-        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "question");
+        if (translation)
+            map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, COMPUTER_GENERATED);
+        else
+            map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, USER_GENERATED);
 //        String text = "what is your name";
-        float pitch = 0.7f;
-        float speed = 0.9f;
+        float pitch = 0.8f;
+        float speed = 1f;
         mTTS.setPitch(pitch);
         mTTS.setSpeechRate(speed);
         Set<String> a = new HashSet<>();

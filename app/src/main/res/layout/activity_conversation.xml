@@ -4,48 +4,39 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/main_background"
+    android:background="@drawable/ic_background"
     tools:context=".ConversationActivity">
 
-<EditText
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintLeft_toLeftOf="parent"
-    app:layout_constraintRight_toRightOf="parent"
-    android:id="@+id/written_text"
-    android:hint="Text here"
-    android:textColor="@color/white"/>
 
-    <TextView
-        android:id="@+id/text_displayed"
-        android:layout_width="match_parent"
+    <ScrollView
+        android:layout_marginHorizontal="20dp"
+        android:id="@+id/body_scroll"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="10dp"
-        android:textColor="@android:color/white"
-        android:textSize="15sp"
-        app:layout_constraintHeight_percent="0.7"
-        app:layout_constraintTop_toBottomOf="@id/written_text" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintLeft_toRightOf="@id/written_text"
-        android:text="Enter"
-        app:layout_constraintTop_toTopOf="@id/written_text"
-        app:layout_constraintBottom_toBottomOf="@id/written_text"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/mic"
+        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:onClick="getResponse"/>
+        app:layout_constraintTop_toTopOf="parent">
 
-    <ImageView
+        <LinearLayout
+            android:id="@+id/body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </ScrollView>
+
+
+    <ImageButton
         android:id="@+id/mic"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:background="@drawable/ic_mic_gray"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/progressBar1"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_displayed" />
+        android:onClick="startListening"/>
 
     <ProgressBar
         android:id="@+id/searching"
@@ -54,20 +45,62 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_displayed" />
+        app:layout_constraintRight_toRightOf="parent" />
 
     <ProgressBar
+        style="@style/Widget.MaterialComponents.LinearProgressIndicator"
         android:id="@+id/progressBar1"
-        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="100dp"
-        android:layout_height="wrap_content"
+        android:layout_height="20dp"
         android:layout_below="@+id/mic"
         android:layout_marginTop="28dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        app:layout_constraintTop_toBottomOf="@id/mic"
+
         app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="13dp"
+        android:background="@drawable/language_translation_color"
+        android:onClick="openTranslate"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/translation_window"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:background="@drawable/translate_window"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:orientation="vertical">
+
+            <TextView
+                android:layout_weight="1"
+                android:id="@+id/word_to_translate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:id="@+id/translation"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

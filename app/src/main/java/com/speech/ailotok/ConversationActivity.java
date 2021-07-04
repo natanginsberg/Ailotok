@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -11,70 +13,120 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.lambdainvoker.LambdaFunctionException;
 import com.amazonaws.mobileconnectors.lambdainvoker.LambdaInvokerFactory;
 import com.amazonaws.regions.Regions;
-import com.speech.ailotok.model.Topic;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 
 public class ConversationActivity extends AppCompatActivity implements RecognitionListener {
 
-    private String QUESTION = "question";
-    private String RESPONSE = "response";
+    private static final String COMPUTER_GENERATED = "computerGenerated";
+    private static final String USER_GENERATED = "user";
 
-    private TextView returnedText;
     private ImageView mic;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
     private String LOG_TAG = "VoiceRecognitionActivity";
     private ProgressBar progressBar;
     private AvatarSpeech avatarSpeech;
-    private Topic topic;
-    private String userName;
-    private List<String> pastUserInputs = new ArrayList<>();
-    private List<String> generatedResponses = new ArrayList<>();
-    private String input = "";
+    private String topic;
     private TextToSpeech textToSpeech;
     private ProgressBar searchProgress;
+    private String conversation = "";
+    private boolean writeOverride = false;
+    private TextView currentUserTextView;
+    private TextView translationText;
+    private boolean translationOpen = false;
+    private View currentChild;
+    private TextView wordToTranslate;
+    private boolean beingTranslated = false;
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
-        userName = getIntent().getStringExtra("name");
-        pastUserInputs.add("Hello my name is " + userName + ".");
-        input = "Hello " + userName + " how are you doing?";
-        generatedResponses.add(input);
+        String userName = getIntent().getStringExtra("name");
+        topic = getIntent().getStringExtra("topic");
         mic = findViewById(R.id.mic);
-        returnedText = findViewById(R.id.text_displayed);
         searchProgress = findViewById(R.id.searching);
-        returnedText.setText("Hello " + userName + " how are you doing?");
-//        Vector<FlowNode> flow = FlowParser.createFlow(userName, getIntent().getStringExtra("topic"));
-        initiateStt();
-        avatarSpeech = new AvatarSpeech(this, input, new UtteranceProgressListener() {
+        wordToTranslate = findViewById(R.id.word_to_translate);
+        translationText = findViewById(R.id.translation);
+
+        initiateStt("en");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+//                try {
+                try {
+                    String startingSentence = getInitialSentence(userName);
+                    if (startingSentence != null) {
+                        JSONObject jsonObject = new JSONObject(startingSentence);
+                        String displayText = jsonObject.getString("display");
+                        conversation = jsonObject.getString("conversation");
+                        startAvatarSpeech(displayText);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                addAIMessage(displayText);
+                            }
+                        });
+                    }
+                } catch (JSONException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            addAIMessage(e.getMessage());
+                        }
+                    });
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void addAIMessage(String displayText) {
+        LinearLayout layout = (LinearLayout) findViewById(R.id.body);
+        @SuppressLint("InflateParams") View child = getLayoutInflater().inflate(R.layout.ai_message, null);
+        TextView textView = (TextView) child.findViewById(R.id.message);
+        textView.setText(displayText);
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.setMargins(0, 24, 0, 24);
+        layout.addView(child, layoutParams);
+//        layout.setLayoutParams(layoutParams);
+        final ScrollView scrollview = ((ScrollView) findViewById(R.id.body_scroll));
+        scrollview.post(new Runnable() {
+            @Override
+            public void run() {
+                scrollview.fullScroll(ScrollView.FOCUS_DOWN);
+            }
+        });
+    }
+
+    private void startAvatarSpeech(String startingSentence) {
+        avatarSpeech = new AvatarSpeech(this, startingSentence, new UtteranceProgressListener() {
             @Override
             public void onStart(String s) {
                 onRmsChanged(0.56f);
@@ -84,34 +136,28 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
             @SuppressLint("UseCompatLoadingForDrawables")
             @Override
             public void onDone(String s) {
-                if (s.equals(QUESTION)) {
+                if (s.equals(USER_GENERATED)) {
                     runOnUiThread(() -> {
                         mic.setVisibility(View.VISIBLE);
                         searchProgress.setVisibility(View.INVISIBLE);
                         mic.setBackground(getDrawable(R.drawable.ic_mic));
 
                     });
-                    returnedText.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            speech.startListening(recognizerIntent);
-                        }
-                    });
-                } else {
-//                    avatarSpeech.speak(true);
                 }
+                startListening();
             }
 
             @Override
             public void onError(String s) {
-
+                addUserMessage(s);
             }
         }, text -> runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                returnedText.setText(text);
+//                addAIMessage(text);
             }
         }));
+
         avatarSpeech.subscribeEndListener(new AvatarSpeech.EndListener() {
             @Override
             public void end() {
@@ -132,20 +178,19 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
                 });
     }
 
-    //
-//    }
-//
-    private void initiateStt() {
+    private void initiateStt(String language) {
         progressBar = (ProgressBar) findViewById(R.id.progressBar1);
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(this);
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en");
+        if (language.equals("iw"))
+            recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "iw-IL");
+        else
+            recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en-US");
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
 
-//        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
     }
 
     @Override
@@ -215,8 +260,22 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onResults(Bundle results) {
+        System.out.println("bug 44 " + "The results are in " + beingTranslated);
+        if (beingTranslated) {
+            beingTranslated = false;
+            return;
+        }
         speech.stopListening();
+//                buttonTimer = null;
+        continueWithSTT(results);
+//
         Log.i(LOG_TAG, "onResults");
+        // waiting for the user to press the button if he wants to.
+
+
+    }
+
+    private void continueWithSTT(Bundle results) {
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
 //        String text = "";
@@ -227,37 +286,76 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
         new Thread(new Runnable() {
             @Override
             public void run() {
-
 //                try {
                 try {
-                    getAIResponse(matches.get(0));
+                    if (translationOpen)
+                        setHebrewWord(matches.get(0));
+                    else
+                        getAIResponse(matches.get(0), false);
                 } catch (JSONException e) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            returnedText.setText(e.getMessage());
+                            addAIMessage(e.getMessage());
                         }
                     });
                     e.printStackTrace();
                 }
             }
         }).start();
-//                } catch (JSONException e) {
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//
-//                            returnedText.setText(e.getMessage());
-//                        }
-//                    });
-//                    e.printStackTrace();
     }
-//                avatarSpeech.speak(matches.get(0).length() > 6);
-//                huffSpeech.answerQuestion(matches.get(0));
-//            }
-//        });
 
-//    }
+    private void setHebrewWord(String word) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                wordToTranslate.setText(word);
+            }
+        });
+        translateWord(word);
+
+    }
+
+    private void translateWord(String word) {
+
+        translate_api translate = new translate_api();
+        translate.setOnTranslationCompleteListener(new translate_api.OnTranslationCompleteListener() {
+            @Override
+            public void onStartTranslation() {
+                // here you can perform initial work before translated the text like displaying progress bar
+            }
+
+            @Override
+            public void onCompleted(String text) {
+                // "text" variable will give you the translated text
+                translationText.setText(text);
+
+                new CountDownTimer(3000, 1000) {
+
+                    public void onTick(long millisUntilFinished) {
+                    }
+
+                    public void onFinish() {
+                        usePrompt(text);
+                        closeTranslationWindow();
+                        initiateStt("en");
+                    }
+                }.start();
+
+            }
+
+            @Override
+            public void onError(Exception e) {
+
+            }
+        });
+        translate.execute(word, "he", "en");
+    }
+
+    private void usePrompt(String word) {
+        avatarSpeech.speak("Now, repeat what you wanted using ." + word, false);
+    }
+
 
     @Override
     public void onRmsChanged(float rmsdB) {
@@ -308,8 +406,9 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
             @Override
             public void run() {
                 try {
-                    String text = ((EditText) findViewById(R.id.written_text)).getText().toString();
-                    getAIResponse(text);
+                    String text = ((EditText) currentChild.findViewById(R.id.written_text)).getText().toString();
+                    writeOverride = true;
+                    getAIResponse(text, true);
 
 //                    getSuggestion(text);
 
@@ -318,7 +417,7 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            returnedText.setText(e.getMessage());
+                            addAIMessage(e.getMessage());
                         }
                     });
                 }
@@ -328,58 +427,91 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
 
     }
 
-    private void getAIResponse(String text) throws JSONException {
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void getAIResponse(String text, boolean written) throws JSONException {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                returnedText.setText(text);
+                if (written && writeOverride)
+                    changeUserMessage(text);
+                else
+                    addUserMessage(text);
                 mic.setVisibility(View.INVISIBLE);
                 searchProgress.setVisibility(View.VISIBLE);
             }
         });
-        Log.e("bug 98", input + " human:" + text);
-        String returned = sendToGrammarCheck("AI: " + input + "\nHuman: " + text + "\n");
-        Log.e("bug 98", "returned text is " + returned);
-        if (returned != null)
-            input = returned;
-        if (returned != null) {
-            generatedResponses.add(input);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    avatarSpeech.speak(input);
-                }
-            }).start();
-            runOnUiThread(new Runnable() {
-                @SuppressLint("UseCompatLoadingForDrawables")
-                @Override
-                public void run() {
-                    mic.setVisibility(View.VISIBLE);
-                    searchProgress.setVisibility(View.INVISIBLE);
-                    returnedText.setText(input.substring(3));
-                    mic.setBackground(getDrawable(R.drawable.ic_mic_gray));
-
-                }
-            });
+        String returned = sendToGrammarCheck(text);
+        if (returned == null || (!written && writeOverride))
+            return;
+        JSONObject jsonObject = new JSONObject(returned);
+        writeOverride = false;
+        String display = "";
+        try {
+            display = jsonObject.getString("display") + "\n" + jsonObject.getString("correction");
+            conversation = jsonObject.getString("conversation");
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
+        ;
+        String finalDisplay = display;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                avatarSpeech.speak(finalDisplay, false);
+            }
+        }).start();
+        runOnUiThread(() -> {
+            mic.setVisibility(View.VISIBLE);
+            searchProgress.setVisibility(View.INVISIBLE);
+
+            addAIMessage(finalDisplay);
+            mic.setBackground(getDrawable(R.drawable.ic_mic_gray));
+
+        });
+    }
+
+    private void changeUserMessage(String text) {
+        currentUserTextView.setText(text);
+        restoreMessage();
+    }
+
+    private void addUserMessage(String text) {
+        LinearLayout layout = (LinearLayout) findViewById(R.id.body);
+        currentChild = getLayoutInflater().inflate(R.layout.user_message, null);
+        currentUserTextView = currentChild.findViewById(R.id.message);
+        currentUserTextView.setText(text);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.setMargins(0, 24, 0, 24);
+        layout.addView(currentChild, layoutParams);
+        final ScrollView scrollview = ((ScrollView) findViewById(R.id.body_scroll));
+        scrollview.post(new Runnable() {
+            @Override
+            public void run() {
+                scrollview.fullScroll(ScrollView.FOCUS_DOWN);
+            }
+        });
     }
 
     private String sendToGrammarCheck(String text) throws JSONException {
-//        sendPost();
 //         Create an instance of CognitoCachingCredentialsProvider
         CognitoCachingCredentialsProvider cognitoProvider = new CognitoCachingCredentialsProvider(
                 this.getApplicationContext(), "us-east-1:165bf270-2865-4a1d-8836-487be260eabb", Regions.US_EAST_1);
 
-// Create LambdaInvokerFactory, to be used to instantiate the Lambda proxy.
         LambdaInvokerFactory factory = LambdaInvokerFactory.builder().credentialsProvider(cognitoProvider).region(Regions.US_EAST_2)
-                .context(this.getApplicationContext()).build();
+                .context(this.getApplicationContext()).clientConfiguration(new ClientConfiguration().withSocketTimeout(600000)).build();
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("inputs", text);
-        jsonObject.put("generated_responses", generatedResponses);
-        System.out.println("this is the json object" + jsonObject.toString());
-        Log.e("bug 98", jsonObject.toString());
-
+        jsonObject.put("input", text);
+//        if (conversation.length() > 300) {
+//            conversation = reduceConversation(conversation);
+//        }
+        jsonObject.put("conversation", conversation);
+        if (conversationIsLong())
+            jsonObject.put("start", 2);
+        else
+            jsonObject.put("start", 3);
+        jsonObject.put("userName", "yossi");
+        jsonObject.put("topic", topic);
 
         final MyInterface myInterface = factory.build(MyInterface.class);
         try {
@@ -390,74 +522,133 @@ public class ConversationActivity extends AppCompatActivity implements Recogniti
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    returnedText.setText(lfe.getDetails());
+                    addAIMessage(lfe.getDetails());
                 }
             });
-            Log.e("Tag", "Failed to invoke echo", lfe);
-
         }
         return null;
     }
-//
-    private void sendPost() {
-        Thread thread = new Thread(new Runnable() {
+
+    private boolean conversationIsLong() {
+        int lastIndex = 0;
+        int count = 0;
+        while (lastIndex != -1) {
+
+            lastIndex = conversation.indexOf("Human:", lastIndex);
+
+            if (lastIndex != -1) {
+                count++;
+                lastIndex += 6;
+            }
+        }
+        return count > 1;
+    }
+
+    private String reduceConversation(String conv) {
+        while (conv.length() > 300) {
+            conv = conv.substring(conv.indexOf("Human:", 6));
+        }
+        return conv;
+    }
+
+    private String getInitialSentence(String userName) throws JSONException {
+//         Create an instance of CognitoCachingCredentialsProvider
+        CognitoCachingCredentialsProvider cognitoProvider = new CognitoCachingCredentialsProvider(
+                this.getApplicationContext(), "us-east-1:165bf270-2865-4a1d-8836-487be260eabb", Regions.US_EAST_1);
+
+        LambdaInvokerFactory factory = LambdaInvokerFactory.builder().credentialsProvider(cognitoProvider).region(Regions.US_EAST_2)
+                .context(this.getApplicationContext()).clientConfiguration(new ClientConfiguration().withSocketTimeout(60000)).build();
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("start", 1);
+        jsonObject.put("userName", "yossi");
+        jsonObject.put("topic", topic);
+
+        final MyInterface myInterface = factory.build(MyInterface.class);
+        try {
+            return myInterface.grammarCheck(
+                    jsonObject);
+
+        } catch (LambdaFunctionException lfe) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    addAIMessage(lfe.getDetails());
+                }
+            });
+        }
+        return null;
+    }
+
+
+    public void openTranslate(View view) {
+        if (translationOpen) {
+            translationOpen = false;
+            findViewById(R.id.translation_window).setVisibility(View.INVISIBLE);
+        } else {
+            speech.stopListening();
+            beingTranslated = true;
+            translationOpen = true;
+            initiateStt("iw");
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    // Do something after 5s = 5000ms
+                    avatarSpeech.speak("What word do you need help with?", true);
+                    findViewById(R.id.translation_window).setVisibility(View.VISIBLE);
+                    beingTranslated = false;
+                }
+            }, 1000);
+
+        }
+    }
+
+    private void startTranslation() {
+        startListening();
+
+    }
+
+    private void startListening() {
+        runOnUiThread(new Runnable() {
+            @SuppressLint("UseCompatLoadingForDrawables")
             @Override
             public void run() {
-                try {
-                    URL url = new URL(" https://xt7j95brm7.execute-api.eu-central-1.amazonaws.com/dev/ask");
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                    conn.setRequestProperty("Accept", "application/json");
-                    conn.setDoOutput(true);
-                    conn.setDoInput(true);
-
-//                    JSONObject jsonParam = new JSONObject();
-//                    jsonParam.put("context", "We introduce a new language representation model called BERT, which stands for idirectional Encoder Representations from Transformers. Unlike recent language epresentation models (Peters et al., 2018a; Radford et al., 2018), BERT is designed to pretrain deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be finetuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial taskspecific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).");
-//
-//                    jsonParam.put("question", "What is BERTs best score on Squadv2 ?");
-                    String inputString = "{\n" +
-                            "\t\"context\": \"We introduce a new language representation model called BERT, which stands for idirectional Encoder Representations from Transformers. Unlike recent language epresentation models (Peters et al., 2018a; Radford et al., 2018), BERT is designed to pretrain deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be finetuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial taskspecific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).\",\n" +
-                            "\t\"question\": \"What is BERTs best score on Squadv2 ?\"\n" +
-                            "}";
-                    OutputStream os = conn.getOutputStream();
-                    byte[] input = inputString.getBytes("utf-8");
-                    os.write(input, 0, input.length);
-                    BufferedReader br = new BufferedReader(
-                            new InputStreamReader(conn.getInputStream(), "utf-8"));
-                    StringBuilder response = new StringBuilder();
-                    String responseLine = null;
-                    while ((responseLine = br.readLine()) != null) {
-//                        suggestions.addAll(responseLine["suggestions"])''
-//            JSONObject r = new JSONObject(responseLine);
-//            JSONArray s = r.getJSONArray("suggestions");
-                        response.append(responseLine);
-                    }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            returnedText.setText(response.toString());
-                        }
-                    });
-
-//                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-//                    //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-//                    os.writeBytes(jsonParam.toString());
-
-                    os.flush();
-                    os.close();
-
-                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                    Log.i("MSG", conn.getResponseMessage());
-
-                    conn.disconnect();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                mic.setBackground(getDrawable(R.drawable.ic_mic));
             }
         });
+        searchProgress.post(new Runnable() {
+            @Override
+            public void run() {
+                speech.startListening(recognizerIntent);
+            }
+        });
+    }
 
-        thread.start();
+    private void closeTranslationWindow() {
+        translationOpen = false;
+        findViewById(R.id.translation_window).setVisibility(View.INVISIBLE);
+        translationText.setText("");
+        wordToTranslate.setText("");
+    }
 
+    public void openEdit(View view) {
+        writeOverride = true;
+        currentChild.findViewById(R.id.enter_button).setVisibility(View.VISIBLE);
+        currentChild.findViewById(R.id.message).setVisibility(View.INVISIBLE);
+        currentChild.findViewById(R.id.written_text).setVisibility(View.VISIBLE);
+        currentChild.findViewById(R.id.edit_icon).setVisibility(View.INVISIBLE);
+        ((EditText) currentChild.findViewById(R.id.written_text)).setText(currentUserTextView.getText());
+    }
+
+    private void restoreMessage() {
+        currentChild.findViewById(R.id.enter_button).setVisibility(View.INVISIBLE);
+        currentChild.findViewById(R.id.message).setVisibility(View.VISIBLE);
+        currentChild.findViewById(R.id.written_text).setVisibility(View.INVISIBLE);
+        currentChild.findViewById(R.id.edit_icon).setVisibility(View.VISIBLE);
+    }
+
+    public void startListening(View view) {
+        startListening();
     }
 }

@@ -9,19 +9,16 @@ public class Topic implements Serializable {
     private final String url;
     private final String name;
     private final Drawable picture;
-    private final String flowString;
 
-    public Topic(String name, String url, String flowString) {
+    public Topic(String name, String url) {
         this.name = name;
         this.url = url;
-        this.flowString = flowString;
         picture = null;
     }
 
-    public Topic(String name, Drawable picture, String flowString) {
+    public Topic(String name, Drawable picture) {
         this.name = name;
         this.picture = picture;
-        this.flowString = flowString;
         url = null;
     }
 
@@ -37,7 +34,4 @@ public class Topic implements Serializable {
         return url;
     }
 
-    public String getFlowString() {
-        return flowString;
-    }
 }
